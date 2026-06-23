@@ -43,12 +43,11 @@ func New() *Publisher {
 		Balancer: &kafka.LeastBytes{},
 	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_URL"),
-	})
-	if rdb.Options().Addr == "" {
-		rdb = redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	addr := os.Getenv("REDIS_URL")
+	if addr == "" {
+		addr = "localhost:6379"
 	}
+	rdb := redis.NewClient(&redis.Options{Addr: addr})
 
 	return &Publisher{kafkaWriter: writer, redis: rdb}
 }
@@ -81,11 +80,13 @@ func (p *Publisher) PublishPosition(driverID, parcelID string, lat, lng float64)
 		"ts":        pos.Ts,
 		"parcel_id": parcelID,
 	})
-	p.redis.Set(context.Background(),
+	if err := p.redis.Set(context.Background(),
 		fmt.Sprintf("driver:%s:pos", driverID),
 		string(redisPayload),
 		30*time.Second,
-	)
+	).Err(); err != nil {
+		log.Printf("redis set error: %v", err)
+	}
 }
 
 func (p *Publisher) PublishNear5Min(parcelID, recipientEmail string) {
