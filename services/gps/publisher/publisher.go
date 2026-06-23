@@ -39,8 +39,9 @@ func New() *Publisher {
 	}
 
 	writer := &kafka.Writer{
-		Addr:     kafka.TCP(brokers...),
-		Balancer: &kafka.LeastBytes{},
+		Addr:                   kafka.TCP(brokers...),
+		Balancer:               &kafka.LeastBytes{},
+		AllowAutoTopicCreation: true,
 	}
 
 	addr := os.Getenv("REDIS_URL")
