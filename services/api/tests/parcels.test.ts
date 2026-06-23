@@ -42,3 +42,26 @@ describe('GET /parcels/:id', () => {
     expect(res.statusCode).toBe(404)
   })
 })
+
+describe('PATCH /parcels/:id/status', () => {
+  it('updates status and adds event', async () => {
+    const create = await app.inject({ method: 'POST', url: '/parcels', payload })
+    const { id } = JSON.parse(create.body)
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/parcels/${id}/status`,
+      payload: { status: 'IN_TRANSIT' }
+    })
+    expect(res.statusCode).toBe(200)
+    expect(JSON.parse(res.body).status).toBe('IN_TRANSIT')
+  })
+})
+
+describe('GET /parcels/:id/position', () => {
+  it('returns 204 when no GPS position available', async () => {
+    const create = await app.inject({ method: 'POST', url: '/parcels', payload })
+    const { id } = JSON.parse(create.body)
+    const res = await app.inject({ method: 'GET', url: `/parcels/${id}/position` })
+    expect(res.statusCode).toBe(204)
+  })
+})
