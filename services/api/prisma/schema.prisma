@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Parcel {
+  id              String       @id @default(uuid())
+  tracking_code   String       @unique
+  sender          String
+  recipient_email String
+  destination_lat Float
+  destination_lng Float
+  status          String       @default("CREATED")
+  created_at      DateTime     @default(now())
+  events          ParcelEvent[]
+}
+
+model ParcelEvent {
+  id        String   @id @default(uuid())
+  parcel_id String
+  status    String
+  message   String
+  timestamp DateTime @default(now())
+  parcel    Parcel   @relation(fields: [parcel_id], references: [id])
+}
