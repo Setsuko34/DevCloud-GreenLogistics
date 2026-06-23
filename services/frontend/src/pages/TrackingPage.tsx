@@ -34,41 +34,46 @@ export function TrackingPage() {
   }, [parcelId, fetchParcel, fetchPosition])
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="page">
       <h1>Suivi de colis</h1>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+
+      <div className="search-row">
         <input
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && setParcelId(input)}
           placeholder="ID ou code de suivi"
-          style={{ flex: 1, padding: '0.5rem' }}
         />
-        <button onClick={() => setParcelId(input)} style={{ padding: '0.5rem 1rem' }}>
-          Suivre
-        </button>
+        <button onClick={() => setParcelId(input)}>Suivre</button>
       </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {parcel && (
-        <div>
-          <p><strong>Code :</strong> {parcel.tracking_code}</p>
-          <p><strong>Statut :</strong> <StatusBadge status={parcel.status} /></p>
-          <p><strong>Destinataire :</strong> {parcel.recipient_email}</p>
+        <div className="card">
+          <div className="parcel-meta">
+            <p><strong>Code :</strong> {parcel.tracking_code}</p>
+            <p><strong>Statut :</strong> <StatusBadge status={parcel.status} /></p>
+            <p><strong>Destinataire :</strong> {parcel.recipient_email}</p>
+          </div>
 
           <ParcelMap
             position={position}
             destination={{ lat: parcel.destination_lat, lng: parcel.destination_lng }}
           />
 
-          <h3>Historique</h3>
-          <ul>
-            {parcel.events.map((e) => (
-              <li key={e.id}>
-                <StatusBadge status={e.status} /> {e.message} — {new Date(e.timestamp).toLocaleString()}
-              </li>
-            ))}
-          </ul>
+          <div className="history" style={{ marginTop: '1.5rem' }}>
+            <h3>Historique</h3>
+            <ul className="history-list">
+              {parcel.events.map((e) => (
+                <li key={e.id}>
+                  <StatusBadge status={e.status} />
+                  <span>{e.message} — {new Date(e.timestamp).toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>

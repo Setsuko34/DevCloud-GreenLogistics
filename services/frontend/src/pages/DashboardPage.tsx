@@ -34,13 +34,15 @@ export function DashboardPage() {
   }, [])
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Dashboard démo — Livreurs actifs</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+    <div className="page">
+      <h1>Livreurs actifs</h1>
+      <div className="dashboard-grid">
         {DEMO_IDS.map((id) => (
-          <div key={id} style={{ border: '1px solid #eee', borderRadius: '8px', padding: '1rem' }}>
-            <h3>Colis {id}</h3>
-            <StatusBadge status={statuses[id] ?? 'UNKNOWN'} />
+          <div key={id} className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0 }}>{id}</h3>
+              <StatusBadge status={statuses[id] ?? 'UNKNOWN'} />
+            </div>
             <ParcelMap
               position={positions[id] ?? null}
               destination={{ lat: 48.8566, lng: 2.3522 }}
