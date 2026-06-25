@@ -1,0 +1,29 @@
+[
+  {
+    "driver_id": "driver-1",
+    "parcel_id": "PARCEL-DEMO-001",
+    "recipient_email": "client1@example.com",
+    "destination": { "lat": 48.8566, "lng": 2.3522 },
+    "waypoints": [
+      { "lat": 48.8900, "lng": 2.3200 },
+      { "lat": 48.8800, "lng": 2.3300 },
+      { "lat": 48.8700, "lng": 2.3400 },
+      { "lat": 48.8650, "lng": 2.3450 },
+      { "lat": 48.8600, "lng": 2.3500 },
+      { "lat": 48.8566, "lng": 2.3522 }
+    ]
+  },
+  {
+    "driver_id": "driver-2",
+    "parcel_id": "PARCEL-DEMO-002",
+    "recipient_email": "client2@example.com",
+    "destination": { "lat": 48.8738, "lng": 2.2950 },
+    "waypoints": [
+      { "lat": 48.8400, "lng": 2.2600 },
+      { "lat": 48.8500, "lng": 2.2700 },
+      { "lat": 48.8600, "lng": 2.2800 },
+      { "lat": 48.8700, "lng": 2.2900 },
+      { "lat": 48.8738, "lng": 2.2950 }
+    ]
+  }
+]
