@@ -105,6 +105,7 @@ jobs:
           image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/greenlogistics-${{ matrix.service }}:${{ github.sha }}
           severity: HIGH,CRITICAL
           exit-code: '1'
+          trivyignores: .trivyignore
 
       - name: Bump image tag in k8s manifests
         if: env.IS_DEVELOP == 'false'
