@@ -8,5 +8,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o gps-simulator .
 FROM alpine:3.19
 WORKDIR /app
 COPY --from=builder /app/gps-simulator .
-COPY waypoints.json .
 CMD ["./gps-simulator"]
