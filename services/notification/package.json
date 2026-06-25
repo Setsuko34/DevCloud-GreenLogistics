@@ -1,0 +1,23 @@
+{
+  "name": "greenlogistics-notification",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "nodemailer": "^6.9.14",
+    "pino": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/nodemailer": "^6.4.15",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
