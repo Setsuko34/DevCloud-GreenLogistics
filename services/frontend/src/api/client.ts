@@ -26,14 +26,14 @@ export interface Position {
   driver_id: string
 }
 
-export async function getParcel(id: string): Promise<Parcel> {
-  const res = await fetch(`${BASE}/parcels/${id}`)
-  if (!res.ok) throw new Error(`Parcel not found: ${id}`)
+export async function getParcel(trackingCode: string): Promise<Parcel> {
+  const res = await fetch(`${BASE}/parcels/${trackingCode}`)
+  if (!res.ok) throw new Error(`Parcel not found: ${trackingCode}`)
   return res.json()
 }
 
-export async function getPosition(id: string): Promise<Position | null> {
-  const res = await fetch(`${BASE}/parcels/${id}/position`)
+export async function getPosition(trackingCode: string): Promise<Position | null> {
+  const res = await fetch(`${BASE}/parcels/${trackingCode}/position`)
   if (res.status === 204) return null
   if (!res.ok) throw new Error('Position fetch failed')
   return res.json()

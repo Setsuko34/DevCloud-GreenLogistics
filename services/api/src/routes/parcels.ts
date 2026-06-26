@@ -32,10 +32,10 @@ export async function parcelRoutes(app: FastifyInstance) {
     return reply.status(201).send(parcel)
   })
 
-  app.get('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string }
+  app.get('/:trackingCode', async (request, reply) => {
+    const { trackingCode } = request.params as { trackingCode: string }
     const parcel = await app.prisma.parcel.findUnique({
-      where: { id },
+      where: { tracking_code: trackingCode },
       include: { events: { orderBy: { timestamp: 'asc' } } }
     })
     if (!parcel) return reply.status(404).send({ error: 'Parcel not found' })
@@ -61,8 +61,11 @@ export async function parcelRoutes(app: FastifyInstance) {
     return parcel
   })
 
-  app.get('/:id/position', async (request, reply) => {
-    const { id } = request.params as { id: string }
+  app.get('/:trackingCode/position', async (request, reply) => {
+    const { trackingCode } = request.params as { trackingCode: string }
+
+    const parcel = await app.prisma.parcel.findUnique({ where: { tracking_code: trackingCode } })
+    if (!parcel) return reply.status(404).send({ error: 'Parcel not found' })
 
     try {
       const keys = await app.redis.keys('driver:*:pos')
@@ -70,7 +73,7 @@ export async function parcelRoutes(app: FastifyInstance) {
         const raw = await app.redis.get(key)
         if (!raw) continue
         const pos = JSON.parse(raw) as { lat: number; lng: number; ts: string; parcel_id: string }
-        if (pos.parcel_id === id) {
+        if (pos.parcel_id === parcel.id) {
           const driver_id = key.split(':')[1]
           return { lat: pos.lat, lng: pos.lng, ts: pos.ts, driver_id }
         }
