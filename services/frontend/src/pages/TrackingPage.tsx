@@ -3,18 +3,34 @@ import { getParcel, getPosition, Parcel, Position } from '../api/client'
 import { ParcelMap } from '../components/ParcelMap'
 import { StatusBadge } from '../components/StatusBadge'
 
+const COOKIE_KEY = 'tracking_history'
+
+function readHistory(): string[] {
+  const match = document.cookie.split('; ').find(r => r.startsWith(`${COOKIE_KEY}=`))
+  if (!match) return []
+  return match.split('=')[1].split(',').filter(Boolean)
+}
+
+function pushHistory(code: string): string[] {
+  const history = [code, ...readHistory().filter(c => c !== code)].slice(0, 5)
+  document.cookie = `${COOKIE_KEY}=${history.join(',')};path=/`
+  return history
+}
+
 export function TrackingPage() {
   const [input, setInput] = useState('')
   const [trackingCode, setTrackingCode] = useState<string | null>(null)
   const [parcel, setParcel] = useState<Parcel | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [history, setHistory] = useState<string[]>(() => readHistory())
 
   const fetchParcel = useCallback(async (code: string) => {
     try {
       const p = await getParcel(code)
       setParcel(p)
       setError(null)
+      setHistory(pushHistory(code))
     } catch {
       setError('Colis introuvable')
     }
@@ -74,6 +90,19 @@ export function TrackingPage() {
               ))}
             </ul>
           </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="card" style={{ marginTop: '1.5rem' }}>
+          <h3>Recherches récentes</h3>
+          <ul className="history-list">
+            {history.map((code) => (
+              <li key={code} style={{ cursor: 'pointer' }} onClick={() => { setInput(code); setTrackingCode(code) }}>
+                {code}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
