@@ -5,14 +5,14 @@ import { StatusBadge } from '../components/StatusBadge'
 
 export function TrackingPage() {
   const [input, setInput] = useState('')
-  const [parcelId, setParcelId] = useState<string | null>(null)
+  const [trackingCode, setTrackingCode] = useState<string | null>(null)
   const [parcel, setParcel] = useState<Parcel | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchParcel = useCallback(async (id: string) => {
+  const fetchParcel = useCallback(async (code: string) => {
     try {
-      const p = await getParcel(id)
+      const p = await getParcel(code)
       setParcel(p)
       setError(null)
     } catch {
@@ -20,18 +20,18 @@ export function TrackingPage() {
     }
   }, [])
 
-  const fetchPosition = useCallback(async (id: string) => {
-    const pos = await getPosition(id)
+  const fetchPosition = useCallback(async (code: string) => {
+    const pos = await getPosition(code)
     setPosition(pos)
   }, [])
 
   useEffect(() => {
-    if (!parcelId) return
-    fetchParcel(parcelId)
-    fetchPosition(parcelId)
-    const interval = setInterval(() => fetchPosition(parcelId), 5000)
+    if (!trackingCode) return
+    fetchParcel(trackingCode)
+    fetchPosition(trackingCode)
+    const interval = setInterval(() => fetchPosition(trackingCode), 5000)
     return () => clearInterval(interval)
-  }, [parcelId, fetchParcel, fetchPosition])
+  }, [trackingCode, fetchParcel, fetchPosition])
 
   return (
     <div className="page">
@@ -42,10 +42,10 @@ export function TrackingPage() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && setParcelId(input)}
-          placeholder="ID ou code de suivi"
+          onKeyDown={(e) => e.key === 'Enter' && setTrackingCode(input)}
+          placeholder="Code de suivi (ex: GL-XXXXXXXX)"
         />
-        <button onClick={() => setParcelId(input)}>Suivre</button>
+        <button onClick={() => setTrackingCode(input)}>Suivre</button>
       </div>
 
       {error && <p className="error">{error}</p>}
