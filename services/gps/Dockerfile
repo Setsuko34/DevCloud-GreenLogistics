@@ -5,8 +5,9 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o gps-simulator .
 
-FROM alpine:3.19
+FROM scratch
 WORKDIR /app
 COPY --from=builder /app/gps-simulator .
 COPY waypoints.json .
-CMD ["./gps-simulator"]
+USER 65532:65532
+ENTRYPOINT ["/app/gps-simulator"]
