@@ -1,4 +1,4 @@
-module github.com/Auguste-p/greenlogistics-gps
+module github.com/setsuko34/greenlogistics-gps
 
 go 1.26.1
 

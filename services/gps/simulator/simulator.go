@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Auguste-p/greenlogistics-gps/publisher"
+	"github.com/setsuko34/greenlogistics-gps/publisher"
 )
 
 type Waypoint struct {

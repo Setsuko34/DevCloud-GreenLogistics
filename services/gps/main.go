@@ -4,8 +4,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/Auguste-p/greenlogistics-gps/publisher"
-	"github.com/Auguste-p/greenlogistics-gps/simulator"
+	"github.com/setsuko34/greenlogistics-gps/publisher"
+	"github.com/setsuko34/greenlogistics-gps/simulator"
 )
 
 func main() {
