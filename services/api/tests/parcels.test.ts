@@ -29,8 +29,8 @@ describe('POST /parcels', () => {
 describe('GET /parcels/:id', () => {
   it('returns 200 with parcel and events', async () => {
     const create = await app.inject({ method: 'POST', url: '/parcels', payload })
-    const { id } = JSON.parse(create.body)
-    const res = await app.inject({ method: 'GET', url: `/parcels/${id}` })
+    const { id, tracking_code } = JSON.parse(create.body)
+    const res = await app.inject({ method: 'GET', url: `/parcels/${tracking_code}` })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.body)
     expect(body.id).toBe(id)
@@ -60,8 +60,8 @@ describe('PATCH /parcels/:id/status', () => {
 describe('GET /parcels/:id/position', () => {
   it('returns 204 when no GPS position available', async () => {
     const create = await app.inject({ method: 'POST', url: '/parcels', payload })
-    const { id } = JSON.parse(create.body)
-    const res = await app.inject({ method: 'GET', url: `/parcels/${id}/position` })
+    const { tracking_code } = JSON.parse(create.body)
+    const res = await app.inject({ method: 'GET', url: `/parcels/${tracking_code}/position` })
     expect(res.statusCode).toBe(204)
   })
 })

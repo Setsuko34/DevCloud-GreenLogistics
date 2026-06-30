@@ -1,0 +1,4 @@
+# Force les fins de ligne Unix (LF) pour les scripts shell,
+# sinon ils plantent dans Docker/Linux avec "exec: no such file or directory"
+*.sh text eol=lf
+entrypoint.sh text eol=lf
