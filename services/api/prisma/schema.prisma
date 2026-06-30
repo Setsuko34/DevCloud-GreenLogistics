@@ -8,14 +8,14 @@ datasource db {
 }
 
 model Parcel {
-  id              String       @id @default(uuid())
-  tracking_code   String       @unique
+  id              String        @id @default(uuid())
+  tracking_code   String        @unique
   sender          String
   recipient_email String
   destination_lat Float
   destination_lng Float
-  status          String       @default("CREATED")
-  created_at      DateTime     @default(now())
+  status          String        @default("CREATED")
+  created_at      DateTime      @default(now())
   events          ParcelEvent[]
 }
 

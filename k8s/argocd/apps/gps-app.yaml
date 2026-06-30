@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Auguste-p/DevCloud-GreenLogistics
+    repoURL: https://github.com/Setsuko34/DevCloud-GreenLogistics
     targetRevision: main
     path: k8s/gps
   destination:
