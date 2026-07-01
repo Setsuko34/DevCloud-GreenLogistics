@@ -42,21 +42,46 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 blue "0/9  Prérequis"
 
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+[[ "$ARCH" == "x86_64" ]] && ARCH_BIN="amd64" || ARCH_BIN="arm64"
+
+install_tool() {
+  local tool="$1"
+  info "Installation de ${tool}..."
+  case "$OS" in
+    Darwin)
+      brew install "$tool"
+      ;;
+    Linux)
+      case "$tool" in
+        kind)
+          curl -sSLo /tmp/kind "https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-${ARCH_BIN}"
+          chmod +x /tmp/kind && sudo mv /tmp/kind /usr/local/bin/kind
+          ;;
+        argocd)
+          curl -sSLo /tmp/argocd "https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-${ARCH_BIN}"
+          chmod +x /tmp/argocd && sudo mv /tmp/argocd /usr/local/bin/argocd
+          ;;
+        *)
+          err "${tool} manquant sur Linux — installe-le manuellement"
+          ;;
+      esac
+      ;;
+    *)
+      err "Plateforme '${OS}' non supportée"
+      ;;
+  esac
+}
+
 for tool in docker kubectl helm; do
   command -v "$tool" &>/dev/null || err "$tool manquant — installe-le d'abord"
 done
 
-if ! command -v kind &>/dev/null; then
-  info "Installation de kind via brew..."
-  brew install kind
-fi
+command -v kind   &>/dev/null || install_tool kind
+command -v argocd &>/dev/null || install_tool argocd
 
-if ! command -v argocd &>/dev/null; then
-  info "Installation de argocd CLI via brew..."
-  brew install argocd
-fi
-
-green "Prérequis OK"
+green "Prérequis OK (${OS}/${ARCH})"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Registry Docker locale
