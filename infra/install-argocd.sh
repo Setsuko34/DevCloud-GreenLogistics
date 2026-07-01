@@ -4,10 +4,10 @@
 set -e
 
 echo "Step 1: Creating argocd namespace..."
-kubectl create namespace argocd
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
 echo "Step 2: Installing ArgoCD..."
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 echo "Step 3: Waiting for ArgoCD server to be ready..."
 kubectl -n argocd rollout status deployment argocd-server --timeout=180s

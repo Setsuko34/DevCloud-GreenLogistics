@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Charge les credentials DEV (non commités) — voir .env.example
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ ! -f "$ROOT_DIR/.env" ]; then
+  echo "❌ Fichier .env manquant à la racine du repo. Fais : cp .env.example .env" >&2
+  exit 1
+fi
+set -a; . "$ROOT_DIR/.env"; set +a
+
 echo "==> 1/8 Ingress NGINX"
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -20,8 +28,8 @@ helm repo add redpanda https://charts.redpanda.com
 helm upgrade --install redpanda redpanda/redpanda \
   -n messaging --create-namespace \
   --set statefulset.replicas=1 \
-  --set resources.cpu.cores=1 \
-  --set resources.memory.container.max=1Gi \
+  --set-string resources.cpu.cores=1 \
+  --set resources.memory.container.max=2Gi \
   --set tls.enabled=false \
   --set external.enabled=false
 kubectl -n messaging rollout status statefulset redpanda --timeout=180s
@@ -31,8 +39,9 @@ helm repo add hashicorp https://helm.releases.hashicorp.com
 helm upgrade --install vault hashicorp/vault \
   -n vault --create-namespace \
   --set "server.dev.enabled=true" \
-  --set "server.dev.devRootToken=root"
-kubectl -n vault rollout status statefulset vault --timeout=120s
+  --set "server.dev.devRootToken=${VAULT_DEV_ROOT_TOKEN}"
+kubectl -n vault wait --for=create pod/vault-0 --timeout=60s
+kubectl -n vault wait --for=condition=Ready pod/vault-0 --timeout=180s
 
 echo "==> 5/8 External Secrets Operator"
 helm repo add external-secrets https://charts.external-secrets.io
@@ -52,9 +61,18 @@ helm upgrade --install kps prometheus-community/kube-prometheus-stack \
 helm repo add grafana https://grafana.github.io/helm-charts
 helm upgrade --install loki grafana/loki -n monitoring \
   --set deploymentMode=SingleBinary \
+  --set singleBinary.replicas=1 \
+  --set read.replicas=0 --set write.replicas=0 --set backend.replicas=0 \
+  --set chunksCache.enabled=false --set resultsCache.enabled=false \
+  --set loki.auth_enabled=false \
   --set loki.commonConfig.replication_factor=1 \
   --set loki.storage.type=filesystem \
-  --set singleBinary.replicas=1
+  --set 'loki.schemaConfig.configs[0].from=2024-01-01' \
+  --set 'loki.schemaConfig.configs[0].store=tsdb' \
+  --set 'loki.schemaConfig.configs[0].object_store=filesystem' \
+  --set 'loki.schemaConfig.configs[0].schema=v13' \
+  --set 'loki.schemaConfig.configs[0].index.prefix=index_' \
+  --set 'loki.schemaConfig.configs[0].index.period=24h'
 helm upgrade --install promtail grafana/promtail -n monitoring \
   --set "config.clients[0].url=http://loki:3100/loki/api/v1/push"
 
@@ -101,6 +119,7 @@ spec:
 MAILHOG
 
 echo "==> 8/8 Linkerd"
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 linkerd install --crds | kubectl apply -f -
 linkerd install | kubectl apply -f -
 linkerd check
