@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gps
+  namespace: app
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gps
+  template:
+    metadata:
+      labels:
+        app: gps
+    spec:
+      containers:
+        - name: gps
+          image: ghcr.io/setsuko34/greenlogistics-gps:latest
+          env:
+            - name: REDPANDA_BROKERS
+              value: redpanda.messaging.svc.cluster.local:9092
+            - name: REDIS_URL
+              value: redis://redis.app.svc.cluster.local:6379
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"

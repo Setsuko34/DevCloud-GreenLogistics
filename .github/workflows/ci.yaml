@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  ORG: ${{ github.repository_owner }}
+  # true on develop: build only, no push, no manifest bump
+  IS_DEVELOP: ${{ github.ref_name == 'develop' }}
+
+jobs:
+  build-test-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: greenlogistics_test
+          POSTGRES_USER: gl
+          POSTGRES_PASSWORD: gl_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        service: [api, notification, frontend, gps]
+        include:
+          - service: api
+            context: services/api
+            runtime: node
+          - service: notification
+            context: services/notification
+            runtime: node
+          - service: frontend
+            context: services/frontend
+            runtime: node
+          - service: gps
+            context: services/gps
+            runtime: go
+
+    steps:
+      # Pin all third-party actions to commit SHAs to prevent supply-chain attacks.
+      # Keep updated via: dependabot with package-ecosystem: github-actions
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set lowercase org name
+        run: echo "ORG=$(echo "$ORG" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        if: env.IS_DEVELOP == 'false'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        if: matrix.runtime == 'node'
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.context }}/package-lock.json
+
+      - name: Setup Go
+        if: matrix.runtime == 'go'
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
+        with:
+          go-version: '1.26'
+          cache-dependency-path: ${{ matrix.context }}/go.sum
+
+      # --- Node services (api, notification, frontend) ---
+      - name: Install & lint (node)
+        if: matrix.runtime == 'node'
+        env:
+          DATABASE_URL: postgresql://gl:gl_test@localhost:5432/greenlogistics_test
+          SERVICE_CONTEXT: ${{ matrix.context }}
+          SERVICE: ${{ matrix.service }}
+        run: |
+          cd "$SERVICE_CONTEXT"
+          npm ci
+          if [ "$SERVICE" = "api" ]; then
+            npx prisma db push --skip-generate
+          fi
+          npm run lint
+
+      # frontend has no test suite — only api/notification run tests
+      - name: Test (node)
+        if: matrix.runtime == 'node' && matrix.service != 'frontend'
+        env:
+          DATABASE_URL: postgresql://gl:gl_test@localhost:5432/greenlogistics_test
+          SERVICE_CONTEXT: ${{ matrix.context }}
+        run: |
+          cd "$SERVICE_CONTEXT"
+          npm test
+
+      # --- Go service (gps) ---
+      - name: Vet & build (go)
+        if: matrix.runtime == 'go'
+        env:
+          SERVICE_CONTEXT: ${{ matrix.context }}
+        run: |
+          cd "$SERVICE_CONTEXT"
+          go vet ./...
+          go build ./...
+
+      - name: Build & push image
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v5.1.0
+        with:
+          context: ${{ matrix.context }}
+          # develop: build locally only (no push, no registry write)
+          push: ${{ env.IS_DEVELOP == 'false' }}
+          load: ${{ env.IS_DEVELOP == 'true' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/greenlogistics-${{ matrix.service }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.ORG }}/greenlogistics-${{ matrix.service }}:latest
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe # v0.28.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/greenlogistics-${{ matrix.service }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
+
+      - name: Bump image tag in k8s manifests
+        if: env.IS_DEVELOP == 'false'
+        env:
+          SERVICE: ${{ matrix.service }}
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.ORG }}/greenlogistics-${{ matrix.service }}:${{ github.sha }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          sed -i "s|image: .*greenlogistics-${SERVICE}:.*|image: ${IMAGE_REF}|" \
+            "k8s/${SERVICE}/deployment.yaml"
+          git config user.email "ci@greenlogistics.local"
+          git config user.name "CI Bot"
+          git add "k8s/${SERVICE}/deployment.yaml"
+          git diff --cached --quiet || git commit -m "chore: bump ${SERVICE} image to ${GIT_SHA}"
+          git push

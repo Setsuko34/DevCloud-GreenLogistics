@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification
+  namespace: app
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification
+  template:
+    metadata:
+      labels:
+        app: notification
+    spec:
+      containers:
+        - name: notification
+          image: ghcr.io/setsuko34/greenlogistics-notification:latest
+          env:
+            - name: REDPANDA_BROKERS
+              value: redpanda.messaging.svc.cluster.local:9092
+            - name: SMTP_HOST
+              value: mailhog.mail.svc.cluster.local
+            - name: SMTP_PORT
+              value: "1025"
+            - name: NOTIFICATION_FROM
+              value: alerts@greenlogistics.local
+          resources:
+            requests:
+              memory: "64Mi"
+            limits:
+              memory: "128Mi"
