@@ -20,7 +20,7 @@ spec:
           image: ghcr.io/setsuko34/greenlogistics-notification:a9868cc8ad4b4db6c6ec048f0a0681b00303c6f3
           env:
             - name: REDPANDA_BROKERS
-              value: redpanda.messaging.svc.cluster.local:9092
+              value: redpanda.messaging.svc.cluster.local:9093
             - name: SMTP_HOST
               value: mailhog.mail.svc.cluster.local
             - name: SMTP_PORT
