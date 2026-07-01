@@ -105,7 +105,13 @@ kubectl apply -f k8s/argocd/root-app.yaml
 
 ArgoCD UI : https://localhost:30080 — `admin` / mot de passe ci-dessus.
 
-ArgoCD sync les 4 apps automatiquement depuis `main` : `api`, `gps`, `notification`, `frontend`.
+ArgoCD sync les 7 apps automatiquement depuis `main` (dans l'ordre des sync-waves) :
+
+| Wave | App | Path |
+|------|-----|------|
+| 0 | `namespaces` | `k8s/namespaces` |
+| 2 | `redis` | `k8s/redis` |
+| 4 | `api`, `gps`, `frontend`, `notification`, `postgres` | `k8s/<service>` |
 
 ---
 
@@ -200,13 +206,19 @@ kubectl scale deploy/api -n app --replicas=0
 ## Structure du dépôt
 
 ```
-infra/              # kind config + bootstrap script
+infra/              # kind config + bootstrap scripts
 services/
 ├── gps/            # Simulateur GPS Go
 └── frontend/       # SPA React + Vite + Leaflet
 k8s/
-├── argocd/         # App of Apps
+├── argocd/         # App of Apps + 7 apps enfants
+├── namespaces/     # Namespace app avec injection Linkerd
+├── api/            # Deployment + Service + Ingress + ExternalSecret
 ├── gps/            # Deployment GPS
-└── frontend/       # Deployment + Service + Ingress frontend
+├── frontend/       # Deployment + Service + Ingress
+├── notification/   # Deployment + Service
+├── redis/          # Deployment + Service
+├── postgres/       # StatefulSet + Service
+└── infra/          # ClusterSecretStore
 docs/               # Plans et specs
 ```
