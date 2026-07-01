@@ -11,7 +11,7 @@ RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-RUN apk upgrade --no-cache && npm install -g npm@latest --quiet
+RUN apk upgrade --no-cache && apk add --no-cache openssl && npm install -g npm@latest --quiet
 COPY package*.json ./
 RUN npm ci --omit=dev && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 COPY --from=builder /app/dist ./dist
