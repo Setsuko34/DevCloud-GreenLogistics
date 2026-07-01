@@ -20,7 +20,7 @@ spec:
           image: ghcr.io/setsuko34/greenlogistics-gps:latest
           env:
             - name: REDPANDA_BROKERS
-              value: redpanda.messaging.svc.cluster.local:9092
+              value: redpanda.messaging.svc.cluster.local:9093
             - name: REDIS_URL
               value: redis://redis.app.svc.cluster.local:6379
           resources:

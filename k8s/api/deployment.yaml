@@ -30,7 +30,7 @@ spec:
             - name: REDIS_URL
               value: redis://redis.app.svc.cluster.local:6379
             - name: REDPANDA_BROKERS
-              value: redpanda.messaging.svc.cluster.local:9092
+              value: redpanda.messaging.svc.cluster.local:9093
           livenessProbe:
             httpGet:
               path: /health
