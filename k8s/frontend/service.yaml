@@ -6,6 +6,7 @@ metadata:
 spec:
   selector:
     app: frontend
+    track: stable
   ports:
     - port: 80
       targetPort: 80

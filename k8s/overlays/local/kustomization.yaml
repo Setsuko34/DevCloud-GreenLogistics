@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Ressources app uniquement — postgres/redis appliqués séparément par le script
+resources:
+  - ../../api/deployment.yaml
+  - ../../api/service.yaml
+  - ../../api/ingress.yaml
+  - ../../gps/deployment.yaml
+  - ../../notification/deployment.yaml
+  - ../../notification/service.yaml
+  - ../../frontend/deployment.yaml
+  - ../../frontend/service.yaml
+  - ../../frontend/ingress.yaml
+  - ../../canary.yaml
+
+# Remplace toutes les images (stable + canary) par la registry locale
+# kustomize matche sur le nom de base de l'image, tag ignoré pour le matching
+images:
+  - name: ghcr.io/setsuko34/greenlogistics-api
+    newName: localhost:5001/greenlogistics-api
+    newTag: local
+  - name: ghcr.io/Auguste-p/greenlogistics-gps
+    newName: localhost:5001/greenlogistics-gps
+    newTag: local
+  - name: ghcr.io/Auguste-p/greenlogistics-frontend
+    newName: localhost:5001/greenlogistics-frontend
+    newTag: local
+  - name: ghcr.io/setsuko34/greenlogistics-notification
+    newName: localhost:5001/greenlogistics-notification
+    newTag: local

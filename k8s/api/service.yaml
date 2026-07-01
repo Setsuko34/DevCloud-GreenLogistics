@@ -6,6 +6,7 @@ metadata:
 spec:
   selector:
     app: api
+    track: stable
   ports:
     - port: 3000
       targetPort: 3000
