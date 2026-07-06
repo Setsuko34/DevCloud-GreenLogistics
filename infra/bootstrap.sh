@@ -14,7 +14,11 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   -n ingress-nginx --create-namespace \
   --set controller.hostPort.enabled=true \
-  --set controller.service.type=NodePort
+  --set controller.service.type=NodePort \
+  --set-string controller.nodeSelector."node-role\.kubernetes\.io/control-plane"="" \
+  --set controller.tolerations[0].key=node-role.kubernetes.io/control-plane \
+  --set controller.tolerations[0].operator=Exists \
+  --set controller.tolerations[0].effect=NoSchedule
 kubectl -n ingress-nginx rollout status deployment ingress-nginx-controller --timeout=120s
 
 echo "==> 2/8 cert-manager"
