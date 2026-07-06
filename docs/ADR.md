@@ -1,5 +1,26 @@
 # Architecture Decision Records — GreenLogistics
 
+## ADR-7 : Argo Rollouts (canary basé sur les replicas) plutôt que Linkerd SMI/Istio
+
+**Contexte** : le sujet exige un déploiement progressif (canary ou blue/green) sur au moins un
+service, avec une vraie possibilité de revert en cas de problème. Linkerd est déjà installé pour le
+mTLS, mais l'extension `linkerd-smi` (nécessaire pour un `TrafficSplit` précis) n'est pas déployée, et
+Istio est écarté pour son empreinte mémoire (cf. ADR-4).
+
+**Décision** : Argo Rollouts (recommandé par le sujet), en canary "basique" sans mesh de trafic dédié —
+le `Service` `api` existant route déjà vers les pods stable et canary proportionnellement à leur nombre
+(mécanisme natif de Kubernetes). Le service `api` passe de 2 à 5 replicas pour permettre un pas de 20%
+exact (1 pod sur 5), et une `AnalysisTemplate` interroge directement la recording rule
+`api:error_ratio:rate5m` (déjà en place pour le SLO 1) pendant la pause du canary : si le taux d'erreur
+dépasse 5%, Argo Rollouts abandonne automatiquement et repasse à 100% stable.
+
+**Conséquences** : pas de nouvelle brique d'infra lourde (pas de SMI/Istio à opérer), et réutilisation
+directe de l'observabilité déjà construite (SLO → décision de rollback automatique). Revert manuel
+toujours disponible et immédiat : `kubectl argo rollouts abort api -n app` (bascule 100% stable) ou
+`kubectl argo rollouts undo api -n app` (retour à la révision précédente). Contrepartie assumée : sans
+mesh, la précision du split dépend du nombre total de replicas (5 replicas pour un pas de 20%, pas
+générique à n'importe quel pourcentage).
+
 ## ADR-1 : Redpanda comme bus événementiel (plutôt que RabbitMQ/NATS)
 
 **Contexte** : le suivi de colis exige un flux continu de positions GPS (1 point/5s/livreur) et des

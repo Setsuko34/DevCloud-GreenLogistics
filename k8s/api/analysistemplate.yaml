@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: api-error-rate
+  namespace: app
+spec:
+  metrics:
+    - name: error-rate
+      interval: 30s
+      count: 2
+      failureLimit: 1
+      # Réutilise la recording rule SLO 1 (k8s/monitoring/api-slo-rules.yaml) :
+      # abandonne automatiquement le canary si le taux d'erreur dépasse 5%.
+      successCondition: result[0] < 0.05
+      provider:
+        prometheus:
+          address: http://kps-kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            api:error_ratio:rate5m

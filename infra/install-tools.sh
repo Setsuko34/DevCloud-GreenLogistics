@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ─────────────────────────────────────────────────────────────────────────────
 # install-tools.sh — Installe les CLI nécessaires SANS sudo, dans ~/.local/bin
-#   kubectl, kind, helm, linkerd
+#   kubectl, kind, helm, linkerd, kubectl-argo-rollouts
 #
 # Cible : Linux / WSL2 (x86_64).
 # ⚠️  Docker doit être installé à part (Docker Desktop ou Docker Engine).
@@ -13,6 +13,7 @@ set -euo pipefail
 BIN_DIR="$HOME/.local/bin"
 KIND_VERSION="v0.24.0"
 HELM_VERSION="v3.21.2"
+ARGO_ROLLOUTS_VERSION="v1.9.0"
 
 mkdir -p "$BIN_DIR"
 TMP="$(mktemp -d)"
@@ -37,6 +38,10 @@ LTAG="$(curl -fsSL https://api.github.com/repos/linkerd/linkerd2/releases/latest
 curl -fsSLo "$TMP/linkerd" "https://github.com/linkerd/linkerd2/releases/download/${LTAG}/linkerd2-cli-${LTAG}-linux-amd64"
 install -m 0755 "$TMP/linkerd" "$BIN_DIR/linkerd"
 
+echo "==> kubectl-argo-rollouts ${ARGO_ROLLOUTS_VERSION}"
+curl -fsSLo "$TMP/kubectl-argo-rollouts" "https://github.com/argoproj/argo-rollouts/releases/download/${ARGO_ROLLOUTS_VERSION}/kubectl-argo-rollouts-linux-amd64"
+install -m 0755 "$TMP/kubectl-argo-rollouts" "$BIN_DIR/kubectl-argo-rollouts"
+
 # S'assurer que ~/.local/bin est dans le PATH
 case ":$PATH:" in
   *":$BIN_DIR:"*) : ;;
@@ -52,5 +57,6 @@ echo "✅ Installés dans $BIN_DIR :"
 "$BIN_DIR/kind" version
 "$BIN_DIR/helm" version --short
 "$BIN_DIR/linkerd" version --client --short 2>/dev/null || true
+"$BIN_DIR/kubectl-argo-rollouts" version --short 2>/dev/null || true
 echo
 echo "Docker doit être installé à part. Ensuite :  ./infra/up.sh"

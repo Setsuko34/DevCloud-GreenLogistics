@@ -155,11 +155,17 @@ jobs:
           IMAGE_REF: ${{ env.REGISTRY }}/${{ env.ORG }}/greenlogistics-${{ matrix.service }}:${{ github.sha }}
           GIT_SHA: ${{ github.sha }}
         run: |
-          sed -i "s|image: .*greenlogistics-${SERVICE}:.*|image: ${IMAGE_REF}|" \
-            "k8s/${SERVICE}/deployment.yaml"
+          # Cible tout manifeste sous k8s/<service>/ référençant l'image (Deployment ou Rollout,
+          # ex: api est passé en Rollout pour le canary — cf. k8s/api/rollout.yaml)
+          FILES=$(grep -rl "greenlogistics-${SERVICE}:" "k8s/${SERVICE}/" || true)
+          if [ -z "$FILES" ]; then
+            echo "::error::Aucun manifeste sous k8s/${SERVICE}/ ne référence greenlogistics-${SERVICE}"
+            exit 1
+          fi
+          sed -i "s|image: .*greenlogistics-${SERVICE}:.*|image: ${IMAGE_REF}|" $FILES
           git config user.email "ci@greenlogistics.local"
           git config user.name "CI Bot"
-          git add "k8s/${SERVICE}/deployment.yaml"
+          git add $FILES
           if git diff --cached --quiet; then
             echo "Pas de changement de manifest pour ${SERVICE}"
             exit 0

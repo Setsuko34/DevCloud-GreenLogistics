@@ -126,6 +126,24 @@ kubectl scale deploy/api -n app --replicas=0
 kubectl get applications -n argocd
 ```
 
+## Canary (Argo Rollouts)
+
+Le service `api` est un `Rollout` (Argo Rollouts) plutôt qu'un `Deployment` classique — canary 20% avec
+analyse automatique basée sur le SLO d'erreur déjà en place (`api:error_ratio:rate5m`) :
+
+```bash
+kubectl argo rollouts get rollout api -n app --watch
+```
+
+Déclencher un nouveau rollout (ex. après un bump d'image par la CI) : le canary passe à 20% du
+trafic, pause 60s, puis l'`AnalysisTemplate` interroge Prometheus — si le taux d'erreur dépasse 5%,
+**rollback automatique** vers 100% stable. Revert manuel à tout moment :
+
+```bash
+kubectl argo rollouts abort api -n app    # bascule immédiatement 100% stable
+kubectl argo rollouts undo api -n app     # revient à la révision précédente
+```
+
 ## CI/CD (GitOps pull-based)
 
 `push` sur `main` déclenche `.github/workflows/ci.yaml` : lint + tests unitaires + build multi-stage +
