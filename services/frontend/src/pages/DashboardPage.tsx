@@ -1,51 +1,44 @@
 import { useState, useEffect } from 'react'
-import { getParcel, getPosition, Position } from '../api/client'
+import { Link } from 'react-router-dom'
+import { listParcels, ParcelWithPosition } from '../api/client'
+import { useLivePositions } from '../hooks/useLivePositions'
 import { ParcelMap } from '../components/ParcelMap'
 import { StatusBadge } from '../components/StatusBadge'
 
-const DEMO_IDS = ['PARCEL-DEMO-001', 'PARCEL-DEMO-002']
-
 export function DashboardPage() {
-  const [positions, setPositions] = useState<Record<string, Position | null>>({})
-  const [statuses, setStatuses] = useState<Record<string, string>>({})
+  const [parcels, setParcels] = useState<ParcelWithPosition[]>([])
+  const livePositions = useLivePositions()
 
   useEffect(() => {
     const refresh = async () => {
-      const results = await Promise.allSettled(
-        DEMO_IDS.map(async (id) => {
-          const [parcel, pos] = await Promise.all([getParcel(id), getPosition(id)])
-          return { id, parcel, pos }
-        })
-      )
-      const newPos: Record<string, Position | null> = {}
-      const newStatus: Record<string, string> = {}
-      results.forEach((r) => {
-        if (r.status === 'fulfilled') {
-          newPos[r.value.id] = r.value.pos
-          newStatus[r.value.id] = r.value.parcel.status
-        }
-      })
-      setPositions(newPos)
-      setStatuses(newStatus)
+      try {
+        setParcels(await listParcels())
+      } catch {
+        // API temporairement indisponible — on garde le dernier état affiché
+      }
     }
     refresh()
-    const interval = setInterval(refresh, 5000)
+    const interval = setInterval(refresh, 10000)
     return () => clearInterval(interval)
   }, [])
 
   return (
     <div className="page">
-      <h1>Livreurs actifs</h1>
+      <h1>Tous les colis</h1>
+      {parcels.length === 0 && <p>Aucun colis pour le moment.</p>}
       <div className="dashboard-grid">
-        {DEMO_IDS.map((id) => (
-          <div key={id} className="card">
+        {parcels.map((p) => (
+          <div key={p.id} className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0 }}>{id}</h3>
-              <StatusBadge status={statuses[id] ?? 'UNKNOWN'} />
+              <h3 style={{ margin: 0 }}>
+                <Link to={`/?code=${p.tracking_code}`}>{p.tracking_code}</Link>
+              </h3>
+              <StatusBadge status={p.status} />
             </div>
+            <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#666' }}>{p.sender} → {p.recipient_email}</p>
             <ParcelMap
-              position={positions[id] ?? null}
-              destination={{ lat: 48.8566, lng: 2.3522 }}
+              position={livePositions[p.id] ?? p.position}
+              destination={{ lat: p.destination_lat, lng: p.destination_lng }}
             />
           </div>
         ))}

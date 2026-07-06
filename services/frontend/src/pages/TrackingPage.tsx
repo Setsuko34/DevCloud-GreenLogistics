@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getParcel, getPosition, Parcel, Position } from '../api/client'
 import { ParcelMap } from '../components/ParcelMap'
 import { StatusBadge } from '../components/StatusBadge'
@@ -18,8 +19,10 @@ function pushHistory(code: string): string[] {
 }
 
 export function TrackingPage() {
-  const [input, setInput] = useState('')
-  const [trackingCode, setTrackingCode] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const codeFromUrl = searchParams.get('code')
+  const [input, setInput] = useState(codeFromUrl ?? '')
+  const [trackingCode, setTrackingCode] = useState<string | null>(codeFromUrl)
   const [parcel, setParcel] = useState<Parcel | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
   const [error, setError] = useState<string | null>(null)
