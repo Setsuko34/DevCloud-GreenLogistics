@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/setsuko34/greenlogistics-api:c711f8ff6d58482e673719f364e6b8f7d6756581
+          image: ghcr.io/setsuko34/greenlogistics-api:0603475c4faf7876ea02d48bcad971c5dc0cc4a7
           ports:
             - containerPort: 3000
           env:
