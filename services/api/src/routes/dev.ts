@@ -36,7 +36,11 @@ export async function devRoutes(app: FastifyInstance) {
     const key = `driver:${driverId}:pos`
     const value = JSON.stringify({ lat, lng, ts: new Date().toISOString(), parcel_id })
 
-    await app.redis.set(key, value, 'EX', 300)
+    try {
+      await app.redis.set(key, value, 'EX', 300)
+    } catch {
+      // Redis indisponible — pas de cache de position, la mise à jour de statut continue
+    }
 
     const parcel = await app.prisma.parcel.findUnique({ where: { id: parcel_id } })
     if (parcel && parcel.status !== 'DELIVERED') {
