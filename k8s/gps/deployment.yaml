@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gps
-          image: ghcr.io/setsuko34/greenlogistics-gps:25cebd5ff2fb53b4d26dfcf670bc11b8de9bf291
+          image: ghcr.io/setsuko34/greenlogistics-gps:0a445903669a6d53389d19a2b2b548d183f8c56b
           env:
             - name: REDPANDA_BROKERS
               value: redpanda.messaging.svc.cluster.local:9093
