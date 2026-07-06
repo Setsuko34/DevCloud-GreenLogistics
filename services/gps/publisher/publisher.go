@@ -28,6 +28,7 @@ type GPSPosition struct {
 
 type ParcelEvent struct {
 	ParcelID       string `json:"parcel_id"`
+	TrackingCode   string `json:"tracking_code"`
 	Event          string `json:"event"`
 	RecipientEmail string `json:"recipient_email"`
 }
@@ -90,9 +91,10 @@ func (p *Publisher) PublishPosition(driverID, parcelID string, lat, lng float64)
 	}
 }
 
-func (p *Publisher) PublishNear5Min(parcelID, recipientEmail string) {
+func (p *Publisher) PublishNear5Min(parcelID, trackingCode, recipientEmail string) {
 	event := ParcelEvent{
 		ParcelID:       parcelID,
+		TrackingCode:   trackingCode,
 		Event:          "near_5min",
 		RecipientEmail: recipientEmail,
 	}

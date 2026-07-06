@@ -16,6 +16,7 @@ type Waypoint struct {
 type Route struct {
 	DriverID       string     `json:"driver_id"`
 	ParcelID       string     `json:"parcel_id"`
+	TrackingCode   string     `json:"tracking_code"`
 	RecipientEmail string     `json:"recipient_email"`
 	Destination    Waypoint   `json:"destination"`
 	Waypoints      []Waypoint `json:"waypoints"`
@@ -42,7 +43,7 @@ func RunDriver(route Route, pub *publisher.Publisher) {
 
 		dist := DistanceKm(wp.Lat, wp.Lng, route.Destination.Lat, route.Destination.Lng)
 		if dist < 1.0 && !notified {
-			pub.PublishNear5Min(route.ParcelID, route.RecipientEmail)
+			pub.PublishNear5Min(route.ParcelID, route.TrackingCode, route.RecipientEmail)
 			notified = true
 		}
 
