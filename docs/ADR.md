@@ -1,25 +1,4 @@
-# Architecture Decision Records — GreenLogistics
-
-## ADR-7 : Argo Rollouts (canary basé sur les replicas) plutôt que Linkerd SMI/Istio
-
-**Contexte** : le sujet exige un déploiement progressif (canary ou blue/green) sur au moins un
-service, avec une vraie possibilité de revert en cas de problème. Linkerd est déjà installé pour le
-mTLS, mais l'extension `linkerd-smi` (nécessaire pour un `TrafficSplit` précis) n'est pas déployée, et
-Istio est écarté pour son empreinte mémoire (cf. ADR-4).
-
-**Décision** : Argo Rollouts (recommandé par le sujet), en canary "basique" sans mesh de trafic dédié —
-le `Service` `api` existant route déjà vers les pods stable et canary proportionnellement à leur nombre
-(mécanisme natif de Kubernetes). Le service `api` passe de 2 à 5 replicas pour permettre un pas de 20%
-exact (1 pod sur 5), et une `AnalysisTemplate` interroge directement la recording rule
-`api:error_ratio:rate5m` (déjà en place pour le SLO 1) pendant la pause du canary : si le taux d'erreur
-dépasse 5%, Argo Rollouts abandonne automatiquement et repasse à 100% stable.
-
-**Conséquences** : pas de nouvelle brique d'infra lourde (pas de SMI/Istio à opérer), et réutilisation
-directe de l'observabilité déjà construite (SLO → décision de rollback automatique). Revert manuel
-toujours disponible et immédiat : `kubectl argo rollouts abort api -n app` (bascule 100% stable) ou
-`kubectl argo rollouts undo api -n app` (retour à la révision précédente). Contrepartie assumée : sans
-mesh, la précision du split dépend du nombre total de replicas (5 replicas pour un pas de 20%, pas
-générique à n'importe quel pourcentage).
+# Architecture Decision Records -GreenLogistics
 
 ## ADR-1 : Redpanda comme bus événementiel (plutôt que RabbitMQ/NATS)
 
@@ -27,7 +6,7 @@ générique à n'importe quel pourcentage).
 événements métier (`near_5min`) consommés par un service indépendant (notification), sans coupler
 producteurs et consommateurs.
 
-**Décision** : Redpanda (compatible protocole Kafka), avec deux topics — `gps.positions` (haute
+**Décision** : Redpanda (compatible protocole Kafka), avec deux topics -`gps.positions` (haute
 fréquence, position brute) et `parcels.events` (événements métier ponctuels, ex. `near_5min`).
 
 **Conséquences** : API Kafka standard (`kafkajs`, `segmentio/kafka-go`) réutilisable partout sans
@@ -42,7 +21,7 @@ statut/historique d'un colis doit être durable et cohérent.
 **Décision** : Redis stocke uniquement `driver:<id>:pos` avec TTL (300s), clé courante par livreur.
 PostgreSQL (via Prisma) est la seule source de vérité pour `Parcel`/`ParcelEvent`.
 
-**Conséquences** : aucune position historique n'est conservée (seulement la dernière) — acceptable pour
+**Conséquences** : aucune position historique n'est conservée (seulement la dernière) -acceptable pour
 un tracking temps réel, pas pour du reporting de trajet. Simplifie fortement le modèle par rapport à un
 stockage de séries temporelles dédié (hors scope).
 
@@ -58,7 +37,7 @@ existante.
 
 **Conséquences** : un microservice de moins à déployer/opérer/monitorer pour un gain limité (le volume
 reste faible pour une démo). Contrepartie assumée : l'API a maintenant une responsabilité de plus
-(temps réel) en plus du CRUD classique — acceptable ici, à revoir si le trafic grossit réellement.
+(temps réel) en plus du CRUD classique -acceptable ici, à revoir si le trafic grossit réellement.
 
 ## ADR-4 : Linkerd plutôt qu'Istio pour le service mesh
 
@@ -96,5 +75,27 @@ qui synchronise les secrets Vault vers de vrais K8s `Secret` consommés par les 
 (`k8s/api/external-secret.yaml`, `k8s/infra/cluster-secret-store.yaml`).
 
 **Conséquences** : aucun secret en clair dans Git. Le mode dev de Vault n'est pas production-ready
-(token root statique, pas de scellement) — assumé et documenté, cohérent avec le contexte pédagogique
+(token root statique, pas de scellement) -assumé et documenté, cohérent avec le contexte pédagogique
 « cluster local jetable, zéro budget ».
+
+
+## ADR-7 : Argo Rollouts (canary basé sur les replicas) plutôt que Linkerd SMI/Istio
+
+**Contexte** : le sujet exige un déploiement progressif (canary ou blue/green) sur au moins un
+service, avec une vraie possibilité de revert en cas de problème. Linkerd est déjà installé pour le
+mTLS, mais l'extension `linkerd-smi` (nécessaire pour un `TrafficSplit` précis) n'est pas déployée, et
+Istio est écarté pour son empreinte mémoire (cf. ADR-4).
+
+**Décision** : Argo Rollouts (recommandé par le sujet), en canary "basique" sans mesh de trafic dédié —
+le `Service` `api` existant route déjà vers les pods stable et canary proportionnellement à leur nombre
+(mécanisme natif de Kubernetes). Le service `api` passe de 2 à 5 replicas pour permettre un pas de 20%
+exact (1 pod sur 5), et une `AnalysisTemplate` interroge directement la recording rule
+`api:error_ratio:rate5m` (déjà en place pour le SLO 1) pendant la pause du canary : si le taux d'erreur
+dépasse 5%, Argo Rollouts abandonne automatiquement et repasse à 100% stable.
+
+**Conséquences** : pas de nouvelle brique d'infra lourde (pas de SMI/Istio à opérer), et réutilisation
+directe de l'observabilité déjà construite (SLO → décision de rollback automatique). Revert manuel
+toujours disponible et immédiat : `kubectl argo rollouts abort api -n app` (bascule 100% stable) ou
+`kubectl argo rollouts undo api -n app` (retour à la révision précédente). Contrepartie assumée : sans
+mesh, la précision du split dépend du nombre total de replicas (5 replicas pour un pas de 20%, pas
+générique à n'importe quel pourcentage).
