@@ -1,0 +1,22 @@
+# Config Alertmanager additionnelle pour kube-prometheus-stack (release "kps").
+# Route l'alerte APIHighErrorRate (k8s/monitoring/api-slo-rules.yaml) vers MailHog par email.
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: mailhog
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+    receivers:
+      - name: mailhog
+        email_configs:
+          - to: alerts@greenlogistics.local
+            from: alertmanager@greenlogistics.local
+            smarthost: mailhog.mail.svc.cluster.local:1025
+            require_tls: false
+            send_resolved: true
+      # Receiver silencieux requis par la route par défaut du chart (alerte Watchdog)
+      - name: "null"
