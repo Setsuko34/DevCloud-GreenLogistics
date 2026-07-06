@@ -8,7 +8,7 @@ flowchart LR
 
     subgraph ns_app["namespace: app (mTLS Linkerd)"]
         Frontend["frontend<br/>React + Nginx"]
-        API["api<br/>Fastify + Prisma"]
+        API["api<br/>Fastify + Prisma<br/>(Rollout canary)"]
         GPS["gps<br/>simulateur Go"]
         Notif["notification<br/>nodemailer"]
         Postgres[("postgres")]
@@ -84,6 +84,24 @@ sequenceDiagram
     K->>N: consomme near_5min
     N->>M: envoie l'email (lien de suivi ?code=...)
 ```
+
+## Canary — Argo Rollouts (service `api`)
+
+```mermaid
+flowchart LR
+    subgraph ns_argorollouts["namespace: argo-rollouts"]
+        Controller["Argo Rollouts<br/>controller"]
+    end
+
+    Controller -.->|orchestre| Rollout["Rollout api (app)<br/>5 replicas"]
+    Rollout -->|"setWeight: 20"| Canary["20% canary"]
+    Canary -->|"pause 60s"| Analysis["AnalysisTemplate<br/>api-error-rate"]
+    Analysis -->|query| Prom[("Prometheus<br/>api:error_ratio:rate5m")]
+    Analysis -->|"< 5% erreurs"| Full["setWeight: 100<br/>(100% stable)"]
+    Analysis -->|"≥ 5% erreurs"| Rollback["abandon auto<br/>→ 100% stable"]
+```
+
+Détails et alternatives évaluées : [ADR-7](ADR.md#adr-7--argo-rollouts-canary-basé-sur-les-replicas-plutôt-que-linkerd-smiistio).
 
 ## CI/CD — GitOps pull-based
 

@@ -107,6 +107,13 @@ echo "127.0.0.1 app.greenlogistics.local api.greenlogistics.local" | sudo tee -a
 | Grafana | http://localhost:30090 | `admin` / `kubectl -n monitoring get secret kps-grafana -o jsonpath='{.data.admin-password}' \| base64 -d` |
 | MailHog | http://localhost:8025 | `kubectl -n mail port-forward svc/mailhog 8025:8025` |
 
+### Troubleshooting
+
+- **MailHog `ERR_CONNECTION_REFUSED`** : le port-forward s'est fermé (terminal fermé, process tué) —
+  relancer `kubectl -n mail port-forward svc/mailhog 8025:8025` dans un terminal dédié laissé ouvert.
+- **Alerte `etcdInsufficientMembers`** dans Grafana/Alertmanager : faux positif connu sur ce cluster
+  kind, sans impact réel — voir [ADR-8](docs/ADR.md#adr-8--alerte-etcdinsufficientmembers-ignorée-faux-positif-sur-le-cluster-kind-local).
+
 ## Démo
 
 ```bash
