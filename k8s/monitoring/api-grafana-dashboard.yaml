@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: greenlogistics-api-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  greenlogistics-api.json: |
+    {
+      "title": "GreenLogistics API — SLO",
+      "uid": "greenlogistics-api-slo",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": { "from": "now-1h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Taux de requêtes (req/s)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            { "expr": "api:http_requests:rate5m", "legendFormat": "requests/s" }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "SLO 1 — Taux d'erreur (seuil 5%)",
+          "type": "gauge",
+          "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+          "targets": [
+            { "expr": "api:error_ratio:rate5m", "legendFormat": "error ratio" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "max": 0.2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.03 },
+                  { "color": "red", "value": 0.05 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Error Budget restant (SLO 5%)",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+          "targets": [
+            { "expr": "clamp_min(1 - (api:error_ratio:rate5m / 0.05), 0)", "legendFormat": "budget restant" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 0.2 },
+                  { "color": "green", "value": 0.5 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "SLO 2 — Latence P95 / P99 (seuil P95 300ms)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            { "expr": "api:latency_p95_seconds:5m", "legendFormat": "P95" },
+            { "expr": "api:latency_p99_seconds:5m", "legendFormat": "P99" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" } }
+        },
+        {
+          "id": 5,
+          "title": "Requêtes par statut HTTP",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            { "expr": "sum(rate(http_requests_total{route!=\"/metrics\"}[5m])) by (status_code)", "legendFormat": "{{status_code}}" }
+          ]
+        }
+      ]
+    }

@@ -57,11 +57,13 @@ echo "==> 6/8 kube-prometheus-stack + Loki + Promtail"
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm upgrade --install kps prometheus-community/kube-prometheus-stack \
   -n monitoring --create-namespace \
+  -f "$ROOT_DIR/infra/values/kube-prometheus-stack-values.yaml" \
   --set grafana.service.type=NodePort \
   --set grafana.service.nodePort=30090 \
   --set prometheus.prometheusSpec.retention=2d \
   --set prometheus.prometheusSpec.resources.requests.memory=512Mi \
   --set prometheus.prometheusSpec.resources.limits.memory=1Gi
+kubectl apply -f "$ROOT_DIR/k8s/monitoring/api-slo-rules.yaml"
 helm repo add grafana https://grafana.github.io/helm-charts
 helm upgrade --install loki grafana/loki -n monitoring \
   --set deploymentMode=SingleBinary \

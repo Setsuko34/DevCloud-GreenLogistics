@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: greenlogistics-api-slo
+  namespace: monitoring
+  labels:
+    release: kps
+spec:
+  groups:
+    - name: greenlogistics-api.slo
+      rules:
+        - record: api:http_requests:rate5m
+          expr: sum(rate(http_requests_total{route!="/metrics"}[5m]))
+        - record: api:http_errors:rate5m
+          expr: sum(rate(http_requests_total{route!="/metrics", status_code=~"5.."}[5m]))
+        # SLO 1 — Disponibilité : taux d'erreur 5xx < 5% sur fenêtre glissante 5m
+        - record: api:error_ratio:rate5m
+          expr: (api:http_errors:rate5m / api:http_requests:rate5m) or vector(0)
+        # SLO 2 — Latence : P95 < 300ms sur fenêtre glissante 5m
+        - record: api:latency_p95_seconds:5m
+          expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route!="/metrics"}[5m])) by (le))
+        - record: api:latency_p99_seconds:5m
+          expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{route!="/metrics"}[5m])) by (le))
+    - name: greenlogistics-api.alerts
+      rules:
+        - alert: APIHighErrorRate
+          expr: api:error_ratio:rate5m > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Taux d'erreur API élevé ({{ $value | humanizePercentage }})"
+            description: "Le taux d'erreur 5xx de l'API GreenLogistics dépasse le seuil SLO de 5% sur 5 minutes (SLO 1 — disponibilité)."
