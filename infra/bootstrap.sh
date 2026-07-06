@@ -124,11 +124,16 @@ spec:
       targetPort: 8025
 MAILHOG
 
-echo "==> 8/8 Linkerd"
+echo "==> 8/9 Linkerd"
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 linkerd install --crds | kubectl apply -f -
 linkerd install | kubectl apply -f -
 linkerd check
+
+echo "==> 9/9 Argo Rollouts (canary)"
+kubectl create namespace argo-rollouts --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v1.9.0/install.yaml
+kubectl -n argo-rollouts rollout status deployment/argo-rollouts --timeout=120s
 
 echo ""
 echo "Bootstrap terminé !"
