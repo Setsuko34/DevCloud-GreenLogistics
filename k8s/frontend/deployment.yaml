@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/setsuko34/greenlogistics-frontend:0a445903669a6d53389d19a2b2b548d183f8c56b
+          image: ghcr.io/setsuko34/greenlogistics-frontend:6da086271cd5605030be92fe5e4ceacf81020f66
           ports:
             - containerPort: 80
           resources:
