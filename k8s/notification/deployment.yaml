@@ -27,6 +27,8 @@ spec:
               value: "1025"
             - name: NOTIFICATION_FROM
               value: alerts@greenlogistics.local
+            - name: FRONTEND_URL
+              value: http://app.greenlogistics.local
           resources:
             requests:
               memory: "64Mi"
