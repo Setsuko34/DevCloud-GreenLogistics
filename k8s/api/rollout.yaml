@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: api
+  namespace: app
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  replicas: 5 # 5 replicas pour un pas de canary précis (20% = 1 pod) sans service mesh de trafic
+  selector:
+    matchLabels:
+      app: api
+  strategy:
+    canary:
+      # Le Service api (selector: app=api) route déjà vers stable + canary,
+      # proportionnellement au nombre de pods de chaque ReplicaSet.
+      steps:
+        - setWeight: 20
+        - pause: { duration: 60s } # laisse du trafic réel atteindre le canary avant analyse
+        - analysis:
+            templates:
+              - templateName: api-error-rate
+        - setWeight: 100
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/setsuko34/greenlogistics-api:c711f8ff6d58482e673719f364e6b8f7d6756581
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              value: redis://redis.app.svc.cluster.local:6379
+            - name: REDPANDA_BROKERS
+              value: redpanda.messaging.svc.cluster.local:9093
+            - name: ALLOWED_ORIGINS
+              value: http://app.greenlogistics.local
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
