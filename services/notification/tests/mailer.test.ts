@@ -5,11 +5,13 @@ describe('buildMailOptions', () => {
   it('builds correct email options for near_5min event', () => {
     const opts = buildMailOptions({
       parcel_id: 'abc-123',
+      tracking_code: 'GL-ABC123',
       event: 'near_5min',
       recipient_email: 'bob@example.com'
     })
     expect(opts.to).toBe('bob@example.com')
     expect(opts.subject).toContain('5 min')
-    expect(opts.text).toContain('abc-123')
+    expect(opts.text).toContain('GL-ABC123')
+    expect(opts.text).toContain('/?code=GL-ABC123')
   })
 })

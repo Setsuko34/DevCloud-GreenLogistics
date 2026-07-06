@@ -32,6 +32,36 @@ export async function parcelRoutes(app: FastifyInstance) {
     return reply.status(201).send(parcel)
   })
 
+  app.get('/', async (_request, reply) => {
+    // Dashboard public : pas de PII (sender/recipient_email) dans la liste en masse
+    const parcels = await app.prisma.parcel.findMany({
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        tracking_code: true,
+        destination_lat: true,
+        destination_lng: true,
+        status: true,
+        created_at: true
+      }
+    })
+
+    const positions: Record<string, { lat: number; lng: number; ts: string; driver_id: string }> = {}
+    try {
+      const keys = await app.redis.keys('driver:*:pos')
+      for (const key of keys) {
+        const raw = await app.redis.get(key)
+        if (!raw) continue
+        const pos = JSON.parse(raw) as { lat: number; lng: number; ts: string; parcel_id: string }
+        positions[pos.parcel_id] = { lat: pos.lat, lng: pos.lng, ts: pos.ts, driver_id: key.split(':')[1] }
+      }
+    } catch {
+      // Redis unavailable — no position data
+    }
+
+    return reply.send(parcels.map((p) => ({ ...p, position: positions[p.id] ?? null })))
+  })
+
   app.get('/:trackingCode', async (request, reply) => {
     const { trackingCode } = request.params as { trackingCode: string }
     const parcel = await app.prisma.parcel.findUnique({

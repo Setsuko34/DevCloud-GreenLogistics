@@ -26,9 +26,25 @@ export interface Position {
   driver_id: string
 }
 
+export interface ParcelWithPosition {
+  id: string
+  tracking_code: string
+  destination_lat: number
+  destination_lng: number
+  status: string
+  created_at: string
+  position: Position | null
+}
+
 export async function getParcel(trackingCode: string): Promise<Parcel> {
   const res = await fetch(`${BASE}/parcels/${trackingCode}`)
   if (!res.ok) throw new Error(`Parcel not found: ${trackingCode}`)
+  return res.json()
+}
+
+export async function listParcels(): Promise<ParcelWithPosition[]> {
+  const res = await fetch(`${BASE}/parcels`)
+  if (!res.ok) throw new Error('Failed to list parcels')
   return res.json()
 }
 

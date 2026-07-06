@@ -2,6 +2,7 @@
   {
     "driver_id": "driver-1",
     "parcel_id": "PARCEL-DEMO-001",
+    "tracking_code": "GL-DEMO0001",
     "recipient_email": "client1@example.com",
     "destination": { "lat": 48.8566, "lng": 2.3522 },
     "waypoints": [
@@ -16,6 +17,7 @@
   {
     "driver_id": "driver-2",
     "parcel_id": "PARCEL-DEMO-002",
+    "tracking_code": "GL-DEMO0002",
     "recipient_email": "client2@example.com",
     "destination": { "lat": 48.8738, "lng": 2.2950 },
     "waypoints": [

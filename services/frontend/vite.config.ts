@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/parcels': 'http://localhost:3000'
+      '/parcels': 'http://localhost:3000',
+      '/ws': { target: 'ws://localhost:3000', ws: true }
     }
   }
 })

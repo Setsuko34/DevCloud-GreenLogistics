@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +18,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/setsuko34/greenlogistics-api:25cebd5ff2fb53b4d26dfcf670bc11b8de9bf291
+          image: ghcr.io/setsuko34/greenlogistics-api:latest
           ports:
             - containerPort: 3000
           env:
@@ -30,6 +31,8 @@ spec:
               value: redis://redis.app.svc.cluster.local:6379
             - name: REDPANDA_BROKERS
               value: redpanda.messaging.svc.cluster.local:9093
+            - name: ALLOWED_ORIGINS
+              value: http://app.greenlogistics.local
           livenessProbe:
             httpGet:
               path: /health
@@ -47,3 +50,4 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "250m"
+

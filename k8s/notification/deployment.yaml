@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: notification
-          image: ghcr.io/setsuko34/greenlogistics-notification:25cebd5ff2fb53b4d26dfcf670bc11b8de9bf291
+          image: ghcr.io/setsuko34/greenlogistics-notification:latest
           env:
             - name: REDPANDA_BROKERS
               value: redpanda.messaging.svc.cluster.local:9093
@@ -27,6 +27,8 @@ spec:
               value: "1025"
             - name: NOTIFICATION_FROM
               value: alerts@greenlogistics.local
+            - name: FRONTEND_URL
+              value: http://app.greenlogistics.local
           resources:
             requests:
               memory: "64Mi"
