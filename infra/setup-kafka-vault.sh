@@ -12,8 +12,16 @@ set -a; . "$ROOT_DIR/.env"; set +a
 DB_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres.app.svc.cluster.local:5432/${POSTGRES_DB}"
 
 echo "==> 1/4 Creating Redpanda topics"
-kubectl -n messaging exec -it redpanda-0 -- rpk topic create gps.positions --partitions 3
-kubectl -n messaging exec -it redpanda-0 -- rpk topic create parcels.events --partitions 1
+create_topic() {  # idempotent : ne recrée pas un topic existant
+  local name=$1 parts=$2
+  if kubectl -n messaging exec redpanda-0 -- rpk topic list 2>/dev/null | grep -qw "$name"; then
+    echo "topic $name déjà présent"
+  else
+    kubectl -n messaging exec -it redpanda-0 -- rpk topic create "$name" --partitions "$parts"
+  fi
+}
+create_topic gps.positions 3
+create_topic parcels.events 1
 
 echo "==> Listing Redpanda topics"
 kubectl -n messaging exec -it redpanda-0 -- rpk topic list
