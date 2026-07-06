@@ -35,7 +35,6 @@ export function DashboardPage() {
               </h3>
               <StatusBadge status={p.status} />
             </div>
-            <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#666' }}>{p.sender} → {p.recipient_email}</p>
             <ParcelMap
               position={livePositions[p.id] ?? p.position}
               destination={{ lat: p.destination_lat, lng: p.destination_lng }}

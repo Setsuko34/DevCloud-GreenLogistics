@@ -33,7 +33,18 @@ export async function parcelRoutes(app: FastifyInstance) {
   })
 
   app.get('/', async (_request, reply) => {
-    const parcels = await app.prisma.parcel.findMany({ orderBy: { created_at: 'desc' } })
+    // Dashboard public : pas de PII (sender/recipient_email) dans la liste en masse
+    const parcels = await app.prisma.parcel.findMany({
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        tracking_code: true,
+        destination_lat: true,
+        destination_lng: true,
+        status: true,
+        created_at: true
+      }
+    })
 
     const positions: Record<string, { lat: number; lng: number; ts: string; driver_id: string }> = {}
     try {

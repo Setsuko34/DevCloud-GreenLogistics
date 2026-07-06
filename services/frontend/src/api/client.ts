@@ -29,8 +29,6 @@ export interface Position {
 export interface ParcelWithPosition {
   id: string
   tracking_code: string
-  sender: string
-  recipient_email: string
   destination_lat: number
   destination_lng: number
   status: string

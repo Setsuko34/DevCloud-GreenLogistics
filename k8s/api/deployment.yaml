@@ -30,6 +30,8 @@ spec:
               value: redis://redis.app.svc.cluster.local:6379
             - name: REDPANDA_BROKERS
               value: redpanda.messaging.svc.cluster.local:9093
+            - name: ALLOWED_ORIGINS
+              value: http://app.greenlogistics.local
           livenessProbe:
             httpGet:
               path: /health
