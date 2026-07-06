@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: notification
-          image: ghcr.io/setsuko34/greenlogistics-notification:latest
+          image: ghcr.io/setsuko34/greenlogistics-notification:0a445903669a6d53389d19a2b2b548d183f8c56b
           env:
             - name: REDPANDA_BROKERS
               value: redpanda.messaging.svc.cluster.local:9093
