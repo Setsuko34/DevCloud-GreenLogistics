@@ -10,9 +10,11 @@ set -euo pipefail
 #
 # Prérequis : stack up (./infra/up.sh), /etc/hosts avec api.greenlogistics.local,
 #             port-forward MailHog actif (kubectl -n mail port-forward svc/mailhog 8025:8025)
+#             API_KEY exportée (même valeur que le secret Vault "api/api_key")
 # ─────────────────────────────────────────────────────────────────────────────
 
 API="${API_URL:-http://api.greenlogistics.local}"
+API_KEY="${API_KEY:-dev-secret-key}"
 DURATION=300   # 5 minutes
 TICK=15        # secondes entre deux mises à jour de position
 MOVE_TIME=120  # secondes pour qu'un colis passe du départ à l'arrivée
@@ -35,7 +37,7 @@ while (( $(date +%s) - start_ts < DURATION )); do
   now=$(( $(date +%s) - start_ts ))
 
   if (( i < n && now >= CREATE_AT[i] )); then
-    resp=$(curl -sf -X POST "$API/parcels" -H 'Content-Type: application/json' -d "$(jq -n \
+    resp=$(curl -sf -X POST "$API/parcels" -H 'Content-Type: application/json' -H "x-api-key: $API_KEY" -d "$(jq -n \
       --arg sender "${NAMES[$i]}" --arg email "${EMAILS[$i]}" \
       --argjson lat "${DEST_LAT[$i]}" --argjson lng "${DEST_LNG[$i]}" \
       '{sender:$sender, recipient_email:$email, destination_lat:$lat, destination_lng:$lng}')")
@@ -58,7 +60,7 @@ while (( $(date +%s) - start_ts < DURATION )); do
     lat=$(echo "scale=6; ${slat[$j]} + $progress * (${DEST_LAT[$j]} - ${slat[$j]})" | bc)
     lng=$(echo "scale=6; ${slng[$j]} + $progress * (${DEST_LNG[$j]} - ${slng[$j]})" | bc)
 
-    curl -sf -X POST "$API/dev/seed-position" -H 'Content-Type: application/json' \
+    curl -sf -X POST "$API/dev/seed-position" -H 'Content-Type: application/json' -H "x-api-key: $API_KEY" \
       -d "$(jq -n --arg pid "${pid[$j]}" --argjson lat "$lat" --argjson lng "$lng" --arg drv "${drv[$j]}" \
         '{parcel_id:$pid, lat:$lat, lng:$lng, driver_id:$drv}')" > /dev/null
     echo "[${now}s] ${drv[$j]} -> $lat,$lng (progress $progress)"

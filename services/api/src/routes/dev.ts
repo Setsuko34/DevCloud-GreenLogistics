@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { randomUUID } from 'crypto'
 import { Kafka } from 'kafkajs'
+import { requireApiKey } from '../plugins/auth'
 
 const NOTIFY_RADIUS_KM = 1
 const ARRIVAL_RADIUS_KM = 0.1
@@ -24,7 +25,21 @@ export async function devRoutes(app: FastifyInstance) {
   const ensureProducer = () => producerReady ??= producer.connect()
   app.addHook('onClose', async () => { if (producerReady) await producer.disconnect() })
 
-  app.post('/seed-position', async (request, reply) => {
+  app.post('/seed-position', {
+    preHandler: requireApiKey,
+    schema: {
+      body: {
+        type: 'object',
+        required: ['parcel_id', 'lat', 'lng'],
+        properties: {
+          parcel_id: { type: 'string', minLength: 1 },
+          lat: { type: 'number', minimum: -90, maximum: 90 },
+          lng: { type: 'number', minimum: -180, maximum: 180 },
+          driver_id: { type: 'string', minLength: 1 }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const { parcel_id, lat, lng, driver_id } = request.body as {
       parcel_id: string
       lat: number
@@ -88,7 +103,7 @@ export async function devRoutes(app: FastifyInstance) {
     return reply.status(201).send({ key, driver_id: driverId, lat, lng, parcel_id })
   })
 
-  app.delete('/seed-position/:driver_id', async (request, reply) => {
+  app.delete('/seed-position/:driver_id', { preHandler: requireApiKey }, async (request, reply) => {
     const { driver_id } = request.params as { driver_id: string }
     await app.redis.del(`driver:${driver_id}:pos`)
     return reply.status(204).send()

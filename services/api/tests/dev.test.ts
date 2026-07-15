@@ -15,8 +15,10 @@ const payload = {
   destination_lng: 2.3522
 }
 
+const authHeaders = { 'x-api-key': 'test-key' }
+
 async function createParcel() {
-  const res = await app.inject({ method: 'POST', url: '/parcels', payload })
+  const res = await app.inject({ method: 'POST', url: '/parcels', headers: authHeaders, payload })
   return JSON.parse(res.body) as { id: string; tracking_code: string }
 }
 
@@ -27,6 +29,7 @@ describe('POST /dev/seed-position', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/dev/seed-position',
+      headers: authHeaders,
       payload: { parcel_id: id, lat: 49.0, lng: 2.0 }
     })
     expect(res.statusCode).toBe(201)
@@ -41,10 +44,21 @@ describe('POST /dev/seed-position', () => {
     await app.inject({
       method: 'POST',
       url: '/dev/seed-position',
+      headers: authHeaders,
       payload: { parcel_id: id, lat: payload.destination_lat, lng: payload.destination_lng }
     })
 
     const parcel = JSON.parse((await app.inject({ method: 'GET', url: `/parcels/${tracking_code}` })).body)
     expect(parcel.status).toBe('DELIVERED')
+  })
+
+  it('returns 401 without a valid API key', async () => {
+    const { id } = await createParcel()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/dev/seed-position',
+      payload: { parcel_id: id, lat: 49.0, lng: 2.0 }
+    })
+    expect(res.statusCode).toBe(401)
   })
 })

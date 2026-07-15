@@ -1,12 +1,29 @@
 import { FastifyInstance } from 'fastify'
 import { randomUUID } from 'crypto'
+import { requireApiKey } from '../plugins/auth'
 
 function generateTrackingCode(): string {
   return 'GL-' + Math.random().toString(36).substring(2, 10).toUpperCase()
 }
 
+const STATUSES = ['CREATED', 'IN_TRANSIT', 'DELIVERED']
+
 export async function parcelRoutes(app: FastifyInstance) {
-  app.post('/', async (request, reply) => {
+  app.post('/', {
+    preHandler: requireApiKey,
+    schema: {
+      body: {
+        type: 'object',
+        required: ['sender', 'recipient_email', 'destination_lat', 'destination_lng'],
+        properties: {
+          sender: { type: 'string', minLength: 1, maxLength: 200 },
+          recipient_email: { type: 'string', format: 'email' },
+          destination_lat: { type: 'number', minimum: -90, maximum: 90 },
+          destination_lng: { type: 'number', minimum: -180, maximum: 180 }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const { sender, recipient_email, destination_lat, destination_lng } = request.body as {
       sender: string
       recipient_email: string
@@ -72,7 +89,18 @@ export async function parcelRoutes(app: FastifyInstance) {
     return parcel
   })
 
-  app.patch('/:id/status', async (request, reply) => {
+  app.patch('/:id/status', {
+    preHandler: requireApiKey,
+    schema: {
+      body: {
+        type: 'object',
+        required: ['status'],
+        properties: {
+          status: { type: 'string', enum: STATUSES }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const { status } = request.body as { status: string }
 

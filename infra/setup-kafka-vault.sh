@@ -31,7 +31,8 @@ echo "==> 2/4 Provisioning secrets in Vault"
 kubectl -n vault exec -it vault-0 -- vault kv put secret/api \
   db_url="${DB_URL}" \
   db_user="${POSTGRES_USER}" \
-  db_password="${POSTGRES_PASSWORD}"
+  db_password="${POSTGRES_PASSWORD}" \
+  api_key="${API_KEY}"
 
 echo ""
 echo "==> 3/4 Creating external-secrets namespace and vault-token secret"

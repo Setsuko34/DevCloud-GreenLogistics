@@ -9,6 +9,12 @@ import { devRoutes } from './routes/dev'
 import { wsRoutes } from './routes/ws'
 
 export async function build(opts: { testing?: boolean } = {}): Promise<FastifyInstance> {
+  if (opts.testing) {
+    process.env.API_KEY ??= 'test-key'
+  } else if (!process.env.API_KEY) {
+    throw new Error('API_KEY environment variable is required')
+  }
+
   const app = Fastify({ logger: !opts.testing })
 
   await app.register(prismaPlugin)
